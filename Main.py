@@ -47,26 +47,40 @@ class DownloadThread(QThread):
 
     def run(self):
         platform = self.checkLink()
+        custom_name = getattr(self, 'custom_name', '').strip()
+
+        if custom_name:
+            filename_template = f'{self.savePath}/{custom_name}.%(ext)s'
+            filename_template = self.get_unique_filename(self.savePath, filename_template, 'mp4')
+        else:
+            if platform == "youtube":
+                filename_template = f'{self.savePath}/%(title)s.%(ext)s'
+            elif platform in ["tiktok", "vimeo", "instagram", "twitter", "facebook", "reddit"]:
+                filename_template = f'{self.savePath}/%(creator)s - %(id)s.%(ext)s'
+            elif platform == "soundcloud":
+                filename_template = f'{self.savePath}/%(title)s.%(ext)s'
+            else:
+                return
 
         if platform == "youtube":
             ydl_opts = {
-                'outtmpl': f'{self.savePath}/%(title)s.%(ext)s',
+                'outtmpl': filename_template,
                 'format': 'bestvideo+bestaudio',
                 'merge_output_format': 'mp4',
                 'noplaylist': True,
                 'progress_hooks': [self.progress],
             }
         
-        elif platform == ["tiktok", "vimeo", "instagram", "twitter", "facebook", "reddit"]: 
+        elif platform in ["tiktok", "vimeo", "instagram", "twitter", "facebook", "reddit"]:
             ydl_opts = {
-                'outtmpl': f'{self.savePath}/%(creator)s - %(id)s.%(ext)s',
+                'outtmpl': filename_template,
                 'format': 'best',
                 'progress_hooks': [self.progress],
             }
 
         elif platform == "soundcloud":
             ydl_opts = {
-                'outtmpl': f'{self.savePath}/%(title)s.%(ext)s',
+                'outtmpl': filename_template,
                 'format': 'bestaudio/best',
                 'merge_output_format': 'mp3',
                 'progress_hooks': [self.progress],
@@ -91,6 +105,17 @@ class DownloadThread(QThread):
             self.ProgressChanged.emit(100)
             self.Finished.emit()
 
+    def get_unique_filename(self, base_path, name_template, ext):
+        full_path = name_template % {'ext': ext} if '%' in name_template else name_template
+        base, extension = os.path.splitext(full_path)
+        counter = 1
+
+        while os.path.exists(full_path):
+            full_path = f"{base} ({counter}){extension}"
+            counter += 1
+
+        return full_path
+
 
 
 
@@ -108,7 +133,7 @@ class CreateApp(QWidget):
 
         #Widgets----
         self.modeButton = QComboBox()
-        self.modeButton.addItems(["Video Downloader", "Photo Editor"])
+        self.modeButton.addItems(["Video Downloader"])
         self.modeButton.setFont(QFont("Georgia", 10))
         self.modeButton.setFixedHeight(26)
 
@@ -129,7 +154,7 @@ class CreateApp(QWidget):
         self.acceptButton.setFixedSize(140, 40)
 
         self.clearButton = QPushButton("Clear")
-        self.clearButton.clicked.connect(lambda: self.linkInput.setText(""))
+        self.clearButton.clicked.connect(lambda: (self.linkInput.setText(""), self.nameInput.setText("")))
         self.clearButton.setFont(QFont("Georgia", 10))
         self.clearButton.setFixedSize(140, 40)
 
@@ -155,6 +180,17 @@ class CreateApp(QWidget):
         self.supportButton.setFont(QFont("Georgia", 10))
         self.supportButton.setFixedSize(250, 33)
 
+        self.nameInput = QLineEdit()
+        self.nameInput.setPlaceholderText("exapmle2381Q (not important)")
+        self.nameInput.setFont(QFont("Georgia", 10))
+        self.nameInput.setFixedHeight(25)
+
+        self.saveNameOption = QCheckBox("Save file name for next session")
+        self.saveNameOption.setFont(QFont("Georgia", 10))
+
+        self.saveLinkOption = QCheckBox("Save link for next session")
+        self.saveLinkOption.setFont(QFont("Georgia", 10))
+
         #Layouts----
         mainLayout = QVBoxLayout()
         buttonLayout = QHBoxLayout()
@@ -162,18 +198,23 @@ class CreateApp(QWidget):
         mainLayout.addWidget(self.modeButton)
         mainLayout.addWidget(self.themeButton)
         mainLayout.addWidget(self.statusLabel)
+
         mainLayout.addWidget(self.loadingBar)
         mainLayout.addWidget(self.linkInput)
+        mainLayout.addWidget(self.nameInput)
 
         buttonLayout.addWidget(self.acceptButton)
         buttonLayout.addWidget(self.clearButton)
         buttonLayout.addWidget(self.folderButton)
 
         mainLayout.addWidget(self.saveOption)
+        mainLayout.addWidget(self.saveNameOption)
+        mainLayout.addWidget(self.saveLinkOption)
+
         mainLayout.addLayout(buttonLayout)
         mainLayout.addWidget(self.supportButton, alignment=Qt.AlignCenter)
 
-        mainLayout.setSpacing(22)
+        mainLayout.setSpacing(19)
         mainLayout.setAlignment(Qt.AlignTop)
 
         self.setLayout(mainLayout)
@@ -241,10 +282,12 @@ class CreateApp(QWidget):
             self.statusLabel.setText(f"Folder: {folder}")
         else:
             QMessageBox.warning(self, "Error!?", "We have trouble with folder path.")
+            QSound.play("Error.wav")
 
     def download(self):
         if not self.savePath:
             QMessageBox.warning(self, "Error!?", "You didn't select a folder.")
+            QSound.play("Error.wav")
             return
 
         linkText = self.linkInput.text().strip()
@@ -257,12 +300,14 @@ class CreateApp(QWidget):
         
         if not any(domain in linkText for domain in supported_domains):
             QMessageBox.warning(self, "Error!?", "We don't support this platform.")
+            QSound.play("Error.wav")
             return
         
         self.statusLabel.setText("Downloading...")
         self.loadingBar.setValue(0)
 
         self.thread = DownloadThread(linkText, self.savePath)
+        self.thread.custom_name = self.nameInput.text().strip()
 
         self.thread.Started.connect(lambda: self.loadingBar.show())
         self.thread.Finished.connect(self.finishProgress)
@@ -272,7 +317,6 @@ class CreateApp(QWidget):
         self.thread.start()
         
     def finish(self):
-        self.linkInput.setText("")
         self.statusLabel.setText("Download complete!")
         QSound.play("Finish.wav")
         
@@ -282,27 +326,14 @@ class CreateApp(QWidget):
         else:
             QTimer.singleShot(2000, lambda: self.statusLabel.setText(self.savePath))
 
+        if not self.saveNameOption.isChecked():
+            self.nameInput.setText("")
+
+        if not self.saveLinkOption.isChecked():
+            self.linkInput.setText("")
+
     def finishProgress(self):
-        QTimer.singleShot(2000, lambda: self.loadingBar.hide())
-        QTimer.singleShot(2000, lambda: self.loadingBar.setValue(0))
-
-    def changeMode(self, index):
-        if index == 0:
-            self.linkInput.show()
-            self.statusLabel.show()
-            self.acceptButton.show()
-            self.clearButton.show()
-            self.folderButton.show()
-            self.saveOption.show()
-
-        elif index == 1:
-            self.linkInput.hide()
-            self.statusLabel.hide()
-            self.acceptButton.hide() 
-            self.clearButton.hide()
-            self.loadingBar.hide()
-            self.folderButton.hide()
-            self.saveOption.hide()
+        QTimer.singleShot(2000, lambda: (self.loadingBar.hide(), self.loadingBar.setValue(0)))
 
     def toggleVideo(self):
         if self.player.state() == QMediaPlayer.PlayingState:
