@@ -150,10 +150,6 @@ class CreateApp(QWidget):
         self.loadingBar.setValue(0)
         self.loadingBar.hide()
 
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        sound_path = os.path.join(current_dir, "Finish.mp3")
-        self.downloadedSound = QSound(sound_path)
-
         self.supportButton = QPushButton("Suported platforms")
         self.supportButton.clicked.connect(lambda: QMessageBox.information(self, "Information", "We Support: Youtube, TikTok, Instagram, SoundCloud, Vimeo, Twitter, Facebook, Reddit"))
         self.supportButton.setFont(QFont("Georgia", 10))
@@ -278,7 +274,7 @@ class CreateApp(QWidget):
     def finish(self):
         self.linkInput.setText("")
         self.statusLabel.setText("Download complete!")
-        self.downloadedSound.play()
+        QSound.play("Finish.wav")
         
         if not self.saveOption.isChecked():
             self.savePath = ""
@@ -313,6 +309,7 @@ class CreateApp(QWidget):
             self.player.pause()
         else:
             self.player.play()
+
             
 
 if __name__ == "__main__":
