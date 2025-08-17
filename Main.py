@@ -5,6 +5,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtMultimedia import *
+from PyQt5.QtGui import *
 
 
 
@@ -191,6 +192,12 @@ class CreateApp(QWidget):
         self.saveLinkOption = QCheckBox("Save link for next session")
         self.saveLinkOption.setFont(QFont("Georgia", 10))
 
+        self.BannerLabel = QLabel(self)
+        self.BannerLabel.setGeometry(QRect(0, 0, 600, 400))
+        self.movie = QMovie("Banner.gif")
+        self.BannerLabel.setMovie(self.movie)
+        self.movie.start()
+
         #Layouts----
         mainLayout = QVBoxLayout()
         buttonLayout = QHBoxLayout()
@@ -213,6 +220,7 @@ class CreateApp(QWidget):
 
         mainLayout.addLayout(buttonLayout)
         mainLayout.addWidget(self.supportButton, alignment=Qt.AlignCenter)
+        mainLayout.addWidget(self.BannerLabel)
 
         mainLayout.setSpacing(19)
         mainLayout.setAlignment(Qt.AlignTop)
