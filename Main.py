@@ -37,14 +37,26 @@ class DownloadThread(QThread):
         elif "soundcloud.com" in linkStroke:
             return "soundcloud"
         
-        elif "twitter.com" in linkStroke:
-            return "twitter"
+        elif "x.com" in linkStroke:
+            return "x"
         
         elif "facebook.com" in linkStroke:
             return "facebook"
         
         elif "reddit.com" in linkStroke:
             return "reddit"
+        
+        elif "vk.com" in linkStroke:
+            return "vk"
+        
+        elif "bandcamp.com" in linkStroke:
+            return "bandcamp"
+        
+        elif "mixcloud.com" in linkStroke:
+            return "mixcloud"
+        
+        elif "BBC.com" in linkStroke:
+            return "bbc"
 
     def run(self):
         platform = self.checkLink()
@@ -56,10 +68,13 @@ class DownloadThread(QThread):
         else:
             if platform == "youtube":
                 filename_template = f'{self.savePath}/%(title)s.%(ext)s'
-            elif platform in ["tiktok", "vimeo", "instagram", "twitter", "facebook", "reddit"]:
+
+            elif platform in ["tiktok", "vimeo", "instagram", "x", "facebook", "reddit", "vk", "bbc"]:
                 filename_template = f'{self.savePath}/%(creator)s - %(id)s.%(ext)s'
-            elif platform == "soundcloud":
+
+            elif platform in ["soundcloud", "bandcamp", "mixcloud"]:
                 filename_template = f'{self.savePath}/%(title)s.%(ext)s'
+
             else:
                 return
 
@@ -72,19 +87,30 @@ class DownloadThread(QThread):
                 'progress_hooks': [self.progress],
             }
         
-        elif platform in ["tiktok", "vimeo", "instagram", "twitter", "facebook", "reddit"]:
+        elif platform in ["tiktok", "vimeo", "instagram", "x", "facebook", "reddit", "vk"]:
             ydl_opts = {
                 'outtmpl': filename_template,
                 'format': 'best',
                 'progress_hooks': [self.progress],
             }
 
-        elif platform == "soundcloud":
+        elif platform in ["soundcloud", "bandcamp", "mixcloud"]:
             ydl_opts = {
                 'outtmpl': filename_template,
                 'format': 'bestaudio/best',
                 'merge_output_format': 'mp3',
                 'progress_hooks': [self.progress],
+            }
+
+        elif platform == "bbc":
+            ydl_opts = {
+                'outtmpl': filename_template,
+                'format': 'bestvideo+bestaudio/best',
+                'merge_output_format': 'mp4',
+                'noplaylist': True,
+                'progress_hooks': [self.progress],
+                'geo_bypass': True,
+                'geo_bypass_country': 'GB', 
             }
 
         else:
@@ -177,7 +203,7 @@ class CreateApp(QWidget):
         self.loadingBar.hide()
 
         self.supportButton = QPushButton("Suported platforms")
-        self.supportButton.clicked.connect(lambda: QMessageBox.information(self, "Information", "We Support: Youtube, TikTok, Instagram, SoundCloud, Vimeo, Twitter, Facebook, Reddit"))
+        self.supportButton.clicked.connect(lambda: QMessageBox.information(self, "Information", "WE SUPPORT: Youtube, Tiktok, Twitter, BBC, Vimeo, Facebook, Reddit, Instagram, Soundcloud, Mixedcloud, Bandcamp, Vk"))
         self.supportButton.setFont(QFont("Georgia", 10))
         self.supportButton.setFixedSize(250, 33)
 
@@ -302,8 +328,10 @@ class CreateApp(QWidget):
 
         supported_domains = [
             "tiktok.com", "vimeo.com", "instagram.com", 
-            "twitter.com", "facebook.com", "reddit.com", 
-            "youtube.com", "youtu.be", "soundcloud.com"
+            "x.com", "facebook.com", "reddit.com", 
+            "youtube.com", "youtu.be", "soundcloud.com",
+            "vk.com", "bandcamp.com", "mixcloud.com",
+            "BBC.com"
         ]
         
         if not any(domain in linkText for domain in supported_domains):
