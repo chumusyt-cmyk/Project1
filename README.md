@@ -1,10 +1,11 @@
 # Project1
 
 Hello everyone. This is my first project on python. This is simple version of video downloader that have been written by PyQt5 and yt_dlp. I will be really appreciate if you like this app:) (cuz i am so bad at scripting ik)
+This app supports Youtubue, TikTok, Vk, Twitter, BBC, Instagram, Vimeo, Soundcloud, Mixedcloud, Bandcamp and Reddit platforms.
 
 # Important:
 - Must be installed all used modules (PyQt5; yt_dlp; os; sys)
-- There are 2 sound and gif. They must be in the same folder where the script is or it just doesn't work. If you want to change it then make sure that you wrote corecly path and name of file (Lines: 197; 293; 298; 311; 329)
+- There are 2 sound and gif. They must be in the same folder where the script is or it just doesn't work. If you want to change it then make sure that you wrote corecly path and name of file (Lines: 223; 319; 324; 339; 357)
 - Installed and setted up ffmpeg format (For yt_dlp)  
 
 # You can:
