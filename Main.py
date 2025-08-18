@@ -5,7 +5,6 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtMultimedia import *
-from PyQt5.QtGui import *
 
 
 
@@ -384,3 +383,4 @@ if __name__ == "__main__":
     window = CreateApp()
     window.show()
     sys.exit(app.exec_())
+
